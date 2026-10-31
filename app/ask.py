@@ -12,6 +12,7 @@
 """
 
 import argparse
+import time
 
 from google import genai
 from google.genai import errors
@@ -22,8 +23,12 @@ from app.config import MODEL, api_error_message, get_api_key
 DEFAULT_QUESTION = "AIE2026の講座の宿題にある「3レベル」とは何ですか？"
 
 
-def print_usage(response) -> None:
-    """レスポンスに使用量メタデータがあれば、人間が見やすく表示する。"""
+def print_usage(response, elapsed_seconds: float | None = None) -> None:
+    """応答時間とトークン数を表示する。"""
+
+    if elapsed_seconds is not None:
+        print(f"[time] {elapsed_seconds:.3f} s")
+
     usage = getattr(response, "usage_metadata", None)
     if usage is None:
         return
@@ -52,8 +57,10 @@ def ask(question: str, chat=None, model_name: str | None = None) -> str:
     if chat is None:
         chat = create_chat(model_name=model_name)
 
+    start = time.perf_counter()
     response = chat.send_message(question)
-    print_usage(response)
+    elapsed = time.perf_counter() - start
+    print_usage(response, elapsed)
     return response.text
 
 
@@ -96,17 +103,17 @@ def main() -> None:
     if args.continue_chat or args.question is None:
         run_interactive_chat()
         return
-
+    
     with genai.Client(api_key=get_api_key()) as client:
         chat = client.chats.create(model=MODEL)
         print(f"[model] {MODEL}")
         print(f"[質問] {args.question}\n")
 
-    try:
-        print(ask(args.question, chat=chat))
-    except errors.APIError as e:
-        print(api_error_message(e.code, e.message))
-        raise SystemExit(1)
+        try:
+            print(ask(args.question, chat=chat))
+        except errors.APIError as e:
+            print(api_error_message(e.code, e.message))
+            raise SystemExit(1)
 
 
 if __name__ == "__main__":

@@ -90,6 +90,8 @@ def make_quiz(lecture: int) -> str:
     復習用の問題を求められたときに使う。
     """
 
+
+
     # 1. 用語集を読み込む
     glossary = load_glossary()
 
@@ -114,3 +116,27 @@ def make_quiz(lecture: int) -> str:
         "question": f"{selected['term']}の意味は？",
         "answer": selected["definition"]
     }, ensure_ascii=False)
+
+
+
+def save_learning_log(content: str) -> str:
+    """利用者の学習内容を learning_log/ フォルダに保存する。
+
+    「学習内容を記録して」「学習ログを保存して」など、
+    利用者が明示的に保存を希望したときに使う。
+    content には保存する学習内容を入れる。
+    """
+    from datetime import datetime
+
+    # 保存先フォルダ
+    log_dir = Path(__file__).resolve().parent.parent / "learning_log"
+    log_dir.mkdir(parents=True, exist_ok=True)
+
+    # 保存するファイル名
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+    file_path = log_dir / f"{timestamp}.md"
+
+    # 学習ログを書き込む
+    file_path.write_text(content, encoding="utf-8")
+
+    return f"学習ログを保存しました: {file_path}"

@@ -77,3 +77,66 @@ def get_lecture_summary(lecture: int) -> str:
         available = sorted(p.stem for p in (DATA_DIR / "lectures").glob("*.md"))
         return f"第{lecture}回の要点はまだありません。用意されている回: {', '.join(available)}"
     return path.read_text(encoding="utf-8")
+
+
+import random
+
+
+
+def make_quiz(lecture: int) -> str:
+    """指定した回の用語から1つを選び、
+    確認問題と答えを返す。
+    「第2回の確認問題を出して」のように、
+    復習用の問題を求められたときに使う。
+    """
+
+
+
+    # 1. 用語集を読み込む
+    glossary = load_glossary()
+
+    # 2. 指定された講義回の用語だけを集める
+    terms = [
+        term for term in glossary
+        if term["lecture"] == lecture
+    ]
+
+    # 3. 指定された回の用語がない場合
+    if not terms:
+        return json.dumps({
+            "question": "",
+            "answer": "指定された回の用語がありません。"
+        }, ensure_ascii=False)
+
+    # 4. 用語をランダムに1つ選ぶ
+    selected = random.choice(terms)
+
+    # 5. 問題と答えをJSON文字列で返す
+    return json.dumps({
+        "question": f"{selected['term']}の意味は？",
+        "answer": selected["definition"]
+    }, ensure_ascii=False)
+
+
+
+def save_learning_log(content: str) -> str:
+    """利用者の学習内容を learning_log/ フォルダに保存する。
+
+    「学習内容を記録して」「学習ログを保存して」など、
+    利用者が明示的に保存を希望したときに使う。
+    content には保存する学習内容を入れる。
+    """
+    from datetime import datetime
+
+    # 保存先フォルダ
+    log_dir = Path(__file__).resolve().parent.parent / "learning_log"
+    log_dir.mkdir(parents=True, exist_ok=True)
+
+    # 保存するファイル名
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+    file_path = log_dir / f"{timestamp}.md"
+
+    # 学習ログを書き込む
+    file_path.write_text(content, encoding="utf-8")
+
+    return f"学習ログを保存しました: {file_path}"

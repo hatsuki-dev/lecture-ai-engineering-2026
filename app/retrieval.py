@@ -137,6 +137,40 @@ def search(query: str) -> list[dict]:
         """, (sqlite_vec.serialize_float32(vector), RAG_TOP_K))
         return [dict(row) for row in rows]
 
+def search_with_neighbors(query: str) -> list[dict]:
+    """検索結果に、同じ資料内の前後1ページを追加する。"""
+    hits = search(query)
+    pages = load_pages()
+
+    page_lookup = {
+        (p["document_id"], p["page"]): p
+        for p in pages
+    }
+
+    results = []
+    seen = set()
+
+    # まず検索で直接ヒットしたページを追加
+    for hit in hits:
+        if hit["page_id"] not in seen:
+            result = dict(hit)
+            result["source"] = "search"
+            results.append(result)
+            seen.add(hit["page_id"])
+
+    # 次に前後1ページを追加
+    for hit in hits:
+        for offset in (-1, 1):
+            key = (hit["document_id"], hit["page"] + offset)
+            page = page_lookup.get(key)
+
+            if page is not None and page["page_id"] not in seen:
+                result = dict(page)
+                result["source"] = "neighbor"
+                results.append(result)
+                seen.add(page["page_id"])
+
+    return results
 
 def search_graph(query: str) -> dict:
     """ベクトル検索を入口に、前後ページと共通用語で候補を広げる。"""

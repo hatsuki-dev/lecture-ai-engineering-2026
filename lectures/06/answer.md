@@ -39,7 +39,7 @@ aws_aws___search_documentation({'search_phrase': 'Using versioning in S3 buckets
 - 結果：
 ツール一覧に glossary_make_quiz が追加された。第2回を指定すると「学習率の意味は？」という問題と答えが返り、第99回を指定すると、出題できるのは第1・2・3・4・6回だという案内が返った。テストは21件すべて通過した。
 - 気づき・疑問：
-最初は、`make_quiz` を tools.py に書いたあと、なぜ mcp_server.py にも1行足すのかが分からなかった。実際にツール一覧を表示して、`tools.py` でクイズを作る処理を書き、`mcp_server.py` でその処理をエージェントから使えるようにしていることが分かった。
+最初は、`make_quiz` を tools.py に書いたあと、なぜ mcp_server.py にも1行足すのかが分からなかった。ツール一覧に glossary_make_quiz が表示されたことで、`tools.py` にはクイズを作る処理を書き、`mcp_server.py` ではその処理をエージェントから使えるように登録していると分かった。また、既存のテストが21件通っていても、第2回のクイズを実際に作ると import random の抜けでエラーが出た。この経験から、自分で追加した機能は、具体的な入力を渡して動かしてみることも大切だと分かった。
 
 
 

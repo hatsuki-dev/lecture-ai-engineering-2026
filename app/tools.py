@@ -7,6 +7,7 @@
 import json
 from functools import cache
 from pathlib import Path
+import random
 
 from app.config import api_error_message
 
@@ -126,3 +127,39 @@ def search_graph(query: str) -> str:
         return json.dumps({"error": str(e)}, ensure_ascii=False)
     except APIError as e:
         return json.dumps({"error": api_error_message(e.code)}, ensure_ascii=False)
+
+def make_quiz(lecture: int) -> str:
+    """指定した講義回の用語から、確認問題を1問とその答えを返す。
+
+    「第2回の確認問題を出して」のように、復習問題を求められたときに使う。
+    lecture には講義回を整数で指定する。例: 第2回なら 2。
+    """
+    glossary = load_glossary()
+    terms = [term for term in glossary if term["lecture"] == lecture]
+
+    if not terms:
+        available_lectures = sorted({term["lecture"] for term in glossary})
+        if available_lectures:
+            available_text = "、".join(
+                f"第{number}回" for number in available_lectures
+            )
+            message = (
+                f"第{lecture}回のクイズは作れません。"
+                f"指定できる講義回は{available_text}です。"
+            )
+        else:
+            message = "用語集に出題できる用語がありません。"
+
+        return json.dumps(
+            {"question": "", "answer": message},
+            ensure_ascii=False,
+        )
+
+    selected = random.choice(terms)
+    return json.dumps(
+        {
+            "question": f"{selected['term']}の意味は？",
+            "answer": selected["definition"],
+        },
+        ensure_ascii=False,
+    )
